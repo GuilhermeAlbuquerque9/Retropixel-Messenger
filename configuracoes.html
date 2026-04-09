@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Configurações</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="rp-bg">
+
+  <div class="rp-window">
+    <div class="rp-title">Configurações</div>
+
+    <div class="rp-content">
+
+      <label>Seu status:</label>
+      <select id="statusSelect">
+        <option value="online">Online</option>
+        <option value="away">Ausente</option>
+        <option value="busy">Ocupado</option>
+      </select>
+
+      <button onclick="saveStatus()">Salvar</button>
+
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Retropixel Messenger™</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="rp-bg">
+
+  <div class="app-container">
+
+    <!-- SIDEBAR (CONTATOS) -->
+    <div class="sidebar">
+
+      <div class="sidebar-header">
+        Contatos
+      </div>
+
+      <div id="contacts" class="contacts"></div>
+
+      <button onclick="logout()">Sair</button>
+
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat">
+
+      <div id="chatTitle" class="chat-header">
+        Selecione um contato
+      </div>
+
+      <div id="messages" class="messages"></div>
+
+      <div class="chat-input">
+        <input id="messageInput" placeholder="Digite uma mensagem...">
+        <button onclick="sendMessage()">Enviar</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

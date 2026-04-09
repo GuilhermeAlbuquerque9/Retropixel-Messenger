@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Retropixel Messenger™</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="rp-bg">
+
+  <div class="rp-window">
+
+    <div class="rp-title">
+      Retropixel Messenger™
+    </div>
+
+    <div class="rp-content">
+
+      <div class="avatar-box">
+        <img src="assets/avatar.png">
+      </div>
+
+      <input id="email" type="email" placeholder="Endereço de email">
+      <input id="password" type="password" placeholder="Senha">
+
+      <select>
+        <option>🟢 Online</option>
+        <option>🌙 Ausente</option>
+        <option>⛔ Ocupado</option>
+      </select>
+
+      <button onclick="login()">Entrar</button>
+      <button onclick="register()" class="secondary">Criar conta</button>
+
+    </div>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

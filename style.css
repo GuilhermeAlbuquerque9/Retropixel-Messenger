@@ -1,0 +1,265 @@
+/* RESET */
+body {
+  margin: 0;
+  font-family: Segoe UI, Arial, sans-serif;
+}
+
+/* ========================= */
+/* 🤍 FUNDO LIMPO */
+/* ========================= */
+
+.rp-bg {
+  height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    #ffffff,
+    #e9f1fb
+  );
+}
+
+/* ========================= */
+/* 🪟 JANELA LOGIN */
+/* ========================= */
+
+.rp-window {
+  width: 340px;
+  margin: 100px auto;
+
+  border-radius: 10px;
+
+  background: white;
+
+  border: 1px solid #c7d4e5;
+
+  box-shadow:
+    0 0 10px rgba(0,0,0,0.2),
+    inset 0 1px 0 #ffffff;
+}
+
+/* TÍTULO */
+.rp-title {
+  padding: 10px;
+
+  font-weight: bold;
+  color: #003366;
+
+  background: linear-gradient(
+    to bottom,
+    #eaf3ff,
+    #c5d9f1
+  );
+
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+/* CONTEÚDO */
+.rp-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* AVATAR */
+.avatar-box {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.avatar-box img {
+  width: 70px;
+  border-radius: 8px;
+}
+
+/* INPUTS */
+input, select {
+  margin-bottom: 10px;
+  padding: 7px;
+
+  border-radius: 4px;
+  border: 1px solid #aab4c3;
+
+  background: linear-gradient(
+    to bottom,
+    #ffffff,
+    #edf2f8
+  );
+}
+
+/* ========================= */
+/* 🟢 BOTÕES */
+/* ========================= */
+
+button {
+  margin-top: 5px;
+  padding: 8px;
+
+  border-radius: 5px;
+  border: 1px solid #4caf50;
+
+  background: linear-gradient(
+    to bottom,
+    #7ed957,
+    #4caf50
+  );
+
+  color: white;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+button:hover {
+  background: linear-gradient(
+    to bottom,
+    #8efc6a,
+    #43a047
+  );
+}
+
+/* BOTÃO SECUNDÁRIO */
+button.secondary {
+  background: linear-gradient(
+    to bottom,
+    #f5f5f5,
+    #dcdcdc
+  );
+
+  border: 1px solid #aaa;
+  color: #333;
+}
+
+/* ========================= */
+/* 💬 APP */
+/* ========================= */
+
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  padding: 10px;
+
+  background: linear-gradient(
+    to bottom,
+    #eaf3ff,
+    #d6e6f7
+  );
+
+  border-right: 1px solid #b7c7da;
+}
+
+/* HEADER */
+.sidebar-header {
+  font-weight: bold;
+  color: #003366;
+  margin-bottom: 10px;
+}
+
+/* CONTATOS */
+.contact {
+  padding: 8px;
+  margin-bottom: 5px;
+
+  border-radius: 5px;
+
+  background: white;
+
+  border: 1px solid #c7d4e5;
+
+  cursor: pointer;
+}
+
+.contact:hover {
+  background: #e6f0ff;
+}
+
+/* ========================= */
+/* 💬 CHAT */
+/* ========================= */
+
+.chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  background: #ffffff;
+}
+
+/* HEADER CHAT */
+.chat-header {
+  padding: 10px;
+
+  font-weight: bold;
+  color: #003366;
+
+  background: linear-gradient(
+    to bottom,
+    #eaf3ff,
+    #c5d9f1
+  );
+
+  border-bottom: 1px solid #b7c7da;
+}
+
+/* MENSAGENS */
+.messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+/* BALÕES */
+.msg {
+  margin-bottom: 10px;
+  padding: 8px;
+
+  border-radius: 6px;
+
+  max-width: 60%;
+
+  background: #f2f6fb;
+
+  border: 1px solid #d0dbe8;
+}
+
+/* MINHAS MENSAGENS */
+.msg.me {
+  margin-left: auto;
+
+  background: #dff5dd;
+  border: 1px solid #9ed89a;
+}
+
+/* INPUT */
+.chat-input {
+  display: flex;
+  padding: 10px;
+
+  border-top: 1px solid #ccc;
+
+  background: #f9fbff;
+}
+
+.chat-input input {
+  flex: 1;
+}
+
+/* ========================= */
+/* 🟠 DETALHES */
+/* ========================= */
+
+a {
+  color: #ff6600;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

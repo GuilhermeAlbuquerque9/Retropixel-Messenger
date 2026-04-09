@@ -236,3 +236,36 @@ function playSound(type) {
 window.logout = async function () {
   await signOut(auth);
 };
+
+import { getDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+window.addContact = async function () {
+  const email = prompt("Digite o email do contato:");
+
+  if (!email) return;
+
+  const snapshot = await getDocs(collection(db, "users"));
+
+  let found = null;
+
+  snapshot.forEach(docSnap => {
+    if (docSnap.data().email === email) {
+      found = { id: docSnap.id, ...docSnap.data() };
+    }
+  });
+
+  if (!found) {
+    alert("Usuário não encontrado!");
+    return;
+  }
+
+  // salva contato
+  await addDoc(collection(db, "contacts"), {
+    owner: currentUser.uid,
+    contactId: found.id,
+    email: found.email
+  });
+
+  alert("Contato adicionado!");
+  loadContacts();
+};

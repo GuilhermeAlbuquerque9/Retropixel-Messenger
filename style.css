@@ -263,3 +263,179 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* ========================= */
+/* 🪟 JANELA MSN */
+/* ========================= */
+
+.messenger-window {
+  width: 900px;
+  height: 600px;
+  margin: 40px auto;
+
+  background: white;
+
+  border: 1px solid #b7c7da;
+  border-radius: 8px;
+
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+}
+
+/* TOPO */
+.top-bar {
+  padding: 8px 12px;
+
+  background: linear-gradient(
+    to bottom,
+    #eaf3ff,
+    #c5d9f1
+  );
+
+  font-weight: bold;
+  color: #003366;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* BOTÃO SAIR */
+.logout-btn {
+  background: #ff6600;
+  border: none;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+/* CORPO */
+.messenger-body {
+  display: flex;
+  height: calc(100% - 40px);
+}
+
+/* ========================= */
+/* 👥 CONTATOS */
+/* ========================= */
+
+.contacts-panel {
+  width: 260px;
+
+  background: linear-gradient(
+    to bottom,
+    #eaf3ff,
+    #d6e6f7
+  );
+
+  border-right: 1px solid #b7c7da;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* INFO USUÁRIO */
+.user-info {
+  padding: 10px;
+  font-size: 13px;
+  color: #003366;
+
+  border-bottom: 1px solid #c7d4e5;
+}
+
+/* LISTA */
+.contacts-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* CONTATO */
+.contact {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+
+  cursor: pointer;
+}
+
+/* STATUS BOLINHA */
+.contact::before {
+  content: "🟢";
+  margin-right: 8px;
+}
+
+/* HOVER */
+.contact:hover {
+  background: #e6f0ff;
+}
+
+/* ========================= */
+/* 💬 CHAT */
+/* ========================= */
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.chat-header {
+  padding: 10px;
+
+  font-weight: bold;
+  color: #003366;
+
+  background: linear-gradient(
+    to bottom,
+    #eaf3ff,
+    #c5d9f1
+  );
+
+  border-bottom: 1px solid #b7c7da;
+}
+
+/* MENSAGENS */
+.messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+
+  background: #ffffff;
+}
+
+/* BALÕES */
+.msg {
+  margin-bottom: 10px;
+  padding: 8px;
+
+  border-radius: 6px;
+
+  max-width: 60%;
+
+  background: #f2f6fb;
+  border: 1px solid #d0dbe8;
+}
+
+.msg.me {
+  margin-left: auto;
+
+  background: #dff5dd;
+  border: 1px solid #9ed89a;
+}
+
+/* INPUT */
+.chat-input {
+  display: flex;
+  padding: 10px;
+
+  border-top: 1px solid #ccc;
+  background: #f9fbff;
+}
+
+.chat-input input {
+  flex: 1;
+}
+
+.chat-input button {
+  margin-left: 5px;
+}

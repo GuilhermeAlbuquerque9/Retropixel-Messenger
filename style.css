@@ -439,3 +439,25 @@ a:hover {
 .chat-input button {
   margin-left: 5px;
 }
+
+.add-contact-btn {
+  margin: 10px;
+  padding: 6px;
+
+  background: linear-gradient(
+    to bottom,
+    #7ed957,
+    #4caf50
+  );
+
+  border: 1px solid #4caf50;
+  border-radius: 5px;
+
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.add-contact-btn:hover {
+  filter: brightness(1.1);
+}

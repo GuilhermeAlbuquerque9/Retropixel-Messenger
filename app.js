@@ -26,6 +26,15 @@ let currentUser = null;
 let currentChat = null;
 let unsubscribe = null;
 
+/* ================= INIT (ANTI-BUG) ================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 DOM pronto");
+
+  setupLoginUI();
+  setupAppUI();
+});
+
 /* ================= HELPERS ================= */
 
 function playClick() {
@@ -45,32 +54,37 @@ function playNudge() {
 /* ================= AUTH ================= */
 
 onAuthStateChanged(auth, async (user) => {
+  console.log("🔐 Auth mudou:", user);
+
   const isIndex = location.pathname.includes("index") || location.pathname === "/";
   const isApp = location.pathname.includes("app");
 
-  if (user && isIndex) {
-    location.href = "app.html";
-    return;
+  try {
+
+    if (user && isIndex) {
+      location.href = "app.html";
+      return;
+    }
+
+    if (!user && isApp) {
+      location.href = "index.html";
+      return;
+    }
+
+    if (user && isApp) {
+      currentUser = user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        status: "online"
+      }, { merge: true });
+
+      loadContacts();
+    }
+
+  } catch (e) {
+    console.error("Erro no Auth:", e);
   }
-
-  if (!user && isApp) {
-    location.href = "index.html";
-    return;
-  }
-
-  if (user && isApp) {
-    currentUser = user;
-
-    await setDoc(doc(db, "users", user.uid), {
-      email: user.email,
-      status: "online"
-    }, { merge: true });
-
-    setupAppUI();
-    loadContacts();
-  }
-
-  if (isIndex) setupLoginUI();
 });
 
 /* ================= LOGIN UI ================= */
@@ -114,6 +128,7 @@ async function login() {
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (e) {
+    console.error(e);
     alert(e.message);
   }
 }
@@ -138,6 +153,7 @@ async function register() {
 
     alert("Conta criada!");
   } catch (e) {
+    console.error(e);
     alert(e.message);
   }
 }
@@ -146,6 +162,8 @@ async function register() {
 
 async function logout() {
   playClick();
+
+  if (!currentUser) return;
 
   await setDoc(doc(db, "users", currentUser.uid), {
     status: "offline"
@@ -158,39 +176,45 @@ async function logout() {
 
 async function loadContacts() {
   const el = document.getElementById("contacts");
-  if (!el) return;
+  if (!el || !currentUser) return;
 
   el.innerHTML = "Carregando...";
 
-  const q = query(collection(db, "contacts"), where("owner", "==", currentUser.uid));
-  const snapshot = await getDocs(q);
+  try {
 
-  el.innerHTML = "";
+    const q = query(collection(db, "contacts"), where("owner", "==", currentUser.uid));
+    const snapshot = await getDocs(q);
 
-  const users = await getDocs(collection(db, "users"));
+    const users = await getDocs(collection(db, "users"));
 
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
+    el.innerHTML = "";
 
-    users.forEach(u => {
-      if (u.id === data.contactId) {
-        const userData = u.data();
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
 
-        const div = document.createElement("div");
-        div.className = "contact";
+      users.forEach(u => {
+        if (u.id === data.contactId) {
+          const userData = u.data();
 
-        div.innerHTML = `
-          <span class="status ${userData.status || "offline"}"></span>
-          <img src="assets/avatar.png" class="contact-avatar">
-          ${userData.email}
-        `;
+          const div = document.createElement("div");
+          div.className = "contact";
 
-        div.onclick = () => openChat(u.id, userData.email);
+          div.innerHTML = `
+            <span class="status ${userData.status || "offline"}"></span>
+            <img src="assets/avatar.png" class="contact-avatar">
+            ${userData.email}
+          `;
 
-        el.appendChild(div);
-      }
+          div.onclick = () => openChat(u.id, userData.email);
+
+          el.appendChild(div);
+        }
+      });
     });
-  });
+
+  } catch (e) {
+    console.error("Erro ao carregar contatos:", e);
+  }
 }
 
 /* ================= ADD CONTATO ================= */
@@ -201,24 +225,30 @@ async function addContact() {
   const email = prompt("Email do contato:");
   if (!email) return;
 
-  const users = await getDocs(collection(db, "users"));
+  try {
 
-  let found = null;
+    const users = await getDocs(collection(db, "users"));
 
-  users.forEach(u => {
-    if (u.data().email === email) {
-      found = { id: u.id };
-    }
-  });
+    let found = null;
 
-  if (!found) return alert("Usuário não encontrado!");
+    users.forEach(u => {
+      if (u.data().email === email) {
+        found = { id: u.id };
+      }
+    });
 
-  await addDoc(collection(db, "contacts"), {
-    owner: currentUser.uid,
-    contactId: found.id
-  });
+    if (!found) return alert("Usuário não encontrado!");
 
-  loadContacts();
+    await addDoc(collection(db, "contacts"), {
+      owner: currentUser.uid,
+      contactId: found.id
+    });
+
+    loadContacts();
+
+  } catch (e) {
+    console.error("Erro ao adicionar contato:", e);
+  }
 }
 
 /* ================= CHAT ================= */
@@ -229,7 +259,10 @@ function getChatId(a, b) {
 
 function openChat(uid, email) {
   currentChat = getChatId(currentUser.uid, uid);
-  document.getElementById("chatTitle").innerText = email;
+
+  const title = document.getElementById("chatTitle");
+  if (title) title.innerText = email;
+
   listenMessages();
 }
 
@@ -239,6 +272,7 @@ function listenMessages() {
   if (unsubscribe) unsubscribe();
 
   const el = document.getElementById("messages");
+  if (!el || !currentChat) return;
 
   const q = query(
     collection(db, "messages", currentChat, "chat"),
@@ -274,7 +308,7 @@ async function sendMessage() {
   playClick();
 
   const input = document.getElementById("messageInput");
-  if (!input.value || !currentChat) return;
+  if (!input || !input.value || !currentChat) return;
 
   await addDoc(collection(db, "messages", currentChat, "chat"), {
     text: input.value,
@@ -303,6 +337,8 @@ async function sendNudge() {
 
 function shakeWindow() {
   const el = document.querySelector(".messenger-window");
+  if (!el) return;
+
   let i = 0;
 
   const interval = setInterval(() => {

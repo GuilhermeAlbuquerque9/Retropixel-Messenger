@@ -461,3 +461,38 @@ a:hover {
 .add-contact-btn:hover {
   filter: brightness(1.1);
 }
+
+/* STATUS */
+.status {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+/* CORES */
+.status.online {
+  background: #4caf50;
+}
+
+.status.away {
+  background: orange;
+}
+
+.status.busy {
+  background: red;
+}
+
+.status.offline {
+  background: gray;
+}
+
+/* AVATAR CONTATO */
+.contact-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  margin-right: 6px;
+}

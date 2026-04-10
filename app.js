@@ -16,129 +16,154 @@ import {
   serverTimestamp,
   doc,
   setDoc,
-  getDocs
+  getDocs,
+  updateDoc,
+  where
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-// ==========================
-// 🔐 LOGIN / REGISTRO
-// ==========================
-
-window.login = async function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  if (!email || !password) {
-    alert("Preencha email e senha!");
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (e) {
-    alert("Erro: " + e.message);
-  }
-};
-
-window.register = async function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  if (!email || !password) {
-    alert("Preencha email e senha!");
-    return;
-  }
-
-  try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-
-    // salva no Firestore
-    await setDoc(doc(db, "users", userCred.user.uid), {
-      email: email,
-      status: "online"
-    });
-
-  } catch (e) {
-    alert("Erro: " + e.message);
-  }
-};
-
-// ==========================
-// 🔁 ESTADO DE AUTENTICAÇÃO
-// ==========================
-
-onAuthStateChanged(auth, (user) => {
-
-  const isIndex = window.location.pathname.includes("index.html") || window.location.pathname === "/";
-  const isApp = window.location.pathname.includes("app.html");
-
-  // Se logado → vai pro app
-  if (user && isIndex) {
-    window.location.href = "app.html";
-  }
-
-  // Se não logado → volta pro login
-  if (!user && isApp) {
-    window.location.href = "index.html";
-  }
-
-  // Se logado no app → inicializa
-  if (user && isApp) {
-    initApp(user);
-  }
-});
-
-// ==========================
-// 🚀 INICIALIZA APP
-// ==========================
+/* ================= VARIÁVEIS ================= */
 
 let currentUser = null;
 let currentChat = null;
 let unsubscribe = null;
 
+/* ================= LOGIN ================= */
+
+window.login = async () => {
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
+
+  if (!email || !password) {
+    alert("Preencha tudo!");
+    return;
+  }
+
+  await signInWithEmailAndPassword(auth, email, password);
+};
+
+window.register = async () => {
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
+
+  if (!email || !password) {
+    alert("Preencha tudo!");
+    return;
+  }
+
+  const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+  await setDoc(doc(db, "users", userCred.user.uid), {
+    email,
+    status: "online"
+  });
+};
+
+/* ================= AUTH ================= */
+
+onAuthStateChanged(auth, (user) => {
+  const isIndex = location.pathname.includes("index") || location.pathname === "/";
+  const isApp = location.pathname.includes("app");
+
+  if (user && isIndex) location.href = "app.html";
+  if (!user && isApp) location.href = "index.html";
+
+  if (user && isApp) initApp(user);
+});
+
+/* ================= INIT ================= */
+
 function initApp(user) {
   currentUser = user;
+
+  // define status online
+  updateDoc(doc(db, "users", user.uid), {
+    status: "online"
+  });
 
   loadContacts();
 }
 
-// ==========================
-// 👥 CONTATOS
-// ==========================
+/* ================= CONTATOS ================= */
 
 async function loadContacts() {
-  const contactsDiv = document.getElementById("contacts");
+  const el = document.getElementById("contacts");
+  if (!el) return;
 
-  if (!contactsDiv) return;
+  el.innerHTML = "Carregando...";
 
-  contactsDiv.innerHTML = "Carregando...";
+  const q = query(
+    collection(db, "contacts"),
+    where("owner", "==", currentUser.uid)
+  );
 
-  const snapshot = await getDocs(collection(db, "users"));
+  const snapshot = await getDocs(q);
 
-  contactsDiv.innerHTML = "";
+  el.innerHTML = "";
 
-  snapshot.forEach(docSnap => {
+  for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
 
-    // não mostrar você mesmo
-    if (docSnap.id === currentUser.uid) return;
+    const users = await getDocs(collection(db, "users"));
 
-    const div = document.createElement("div");
-    div.className = "contact";
+    users.forEach(u => {
+      if (u.id === data.contactId) {
+        const userData = u.data();
 
-    div.innerText = data.email;
+        const div = document.createElement("div");
+        div.className = "contact";
 
-    div.onclick = () => openChat(docSnap.id, data.email);
+        div.innerHTML = `
+          <span class="status ${userData.status}"></span>
+          <img src="assets/avatar.png" class="contact-avatar">
+          ${userData.email}
+        `;
 
-    contactsDiv.appendChild(div);
-  });
+        div.onclick = () => openChat(u.id, userData.email);
+
+        el.appendChild(div);
+      }
+    });
+  }
+
+  if (el.innerHTML === "") {
+    el.innerHTML = "Nenhum contato ainda 😢";
+  }
 }
 
-// ==========================
-// 💬 CHAT
-// ==========================
+/* ================= ADD CONTATO ================= */
 
-function getChatId(uid1, uid2) {
-  return [uid1, uid2].sort().join("_");
+window.addContact = async () => {
+  const email = prompt("Email do contato:");
+  if (!email) return;
+
+  const users = await getDocs(collection(db, "users"));
+
+  let found = null;
+
+  users.forEach(u => {
+    if (u.data().email === email) {
+      found = { id: u.id, ...u.data() };
+    }
+  });
+
+  if (!found) {
+    alert("Usuário não encontrado!");
+    return;
+  }
+
+  await addDoc(collection(db, "contacts"), {
+    owner: currentUser.uid,
+    contactId: found.id
+  });
+
+  alert("Contato adicionado!");
+  loadContacts();
+};
+
+/* ================= CHAT ================= */
+
+function getChatId(a, b) {
+  return [a, b].sort().join("_");
 }
 
 function openChat(uid, email) {
@@ -150,122 +175,130 @@ function openChat(uid, email) {
   listenMessages();
 }
 
-// ==========================
-// 📡 MENSAGENS REALTIME
-// ==========================
+/* ================= REALTIME ================= */
 
 function listenMessages() {
   if (unsubscribe) unsubscribe();
 
-  const messagesDiv = document.getElementById("messages");
-  if (!messagesDiv) return;
+  const el = document.getElementById("messages");
+  if (!el) return;
 
   const q = query(
     collection(db, "messages", currentChat, "chat"),
     orderBy("timestamp")
   );
 
-  unsubscribe = onSnapshot(q, (snapshot) => {
+  unsubscribe = onSnapshot(q, snap => {
+    el.innerHTML = "";
 
-    messagesDiv.innerHTML = "";
-
-    snapshot.forEach(docSnap => {
+    snap.forEach(docSnap => {
       const msg = docSnap.data();
+
+      // NUDGE
+      if (msg.type === "nudge") {
+        shakeWindow();
+        playSound("nudge");
+        return;
+      }
 
       const div = document.createElement("div");
       div.className = msg.sender === currentUser.uid ? "msg me" : "msg";
-
       div.innerText = msg.text;
 
-      messagesDiv.appendChild(div);
+      el.appendChild(div);
 
-      // 🔊 som ao receber
+      // som ao receber
       if (msg.sender !== currentUser.uid) {
         playSound("receive");
       }
     });
 
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    el.scrollTop = el.scrollHeight;
   });
 }
 
-// ==========================
-// ✉️ ENVIAR MENSAGEM
-// ==========================
+/* ================= SEND ================= */
 
-window.sendMessage = async function () {
+window.sendMessage = async () => {
   const input = document.getElementById("messageInput");
 
-  if (!input || !currentChat) return;
+  if (!input || !input.value || !currentChat) return;
 
-  const text = input.value.trim();
+  await addDoc(collection(db, "messages", currentChat, "chat"), {
+    text: input.value,
+    sender: currentUser.uid,
+    timestamp: serverTimestamp()
+  });
 
-  if (!text) return;
+  playSound("send");
 
-  try {
-    await addDoc(collection(db, "messages", currentChat, "chat"), {
-      text: text,
-      sender: currentUser.uid,
-      timestamp: serverTimestamp()
-    });
-
-    input.value = "";
-
-    // 🔊 som ao enviar
-    playSound("send");
-
-  } catch (e) {
-    console.error(e);
-  }
+  input.value = "";
 };
 
-// ==========================
-// 🔊 SONS
-// ==========================
+window.sendNudge = async () => {
+  if (!currentChat) return;
 
-function playSound(type) {
-  const audio = new Audio(`assets/${type}.wav`);
-  audio.volume = 0.4;
-  audio.play().catch(() => {});
-}
+  await addDoc(collection(db, "messages", currentChat, "chat"), {
+    type: "nudge",
+    sender: currentUser.uid,
+    timestamp: serverTimestamp()
+  });
 
-// ==========================
-// 🚪 LOGOUT
-// ==========================
+  playSound("nudge");
+};
 
-window.logout = async function () {
+/* ================= STATUS ================= */
+
+window.saveStatus = async () => {
+  const status = document.getElementById("statusSelect")?.value;
+
+  if (!status) return;
+
+  await updateDoc(doc(db, "users", currentUser.uid), {
+    status
+  });
+
+  alert("Status atualizado!");
+  loadContacts();
+};
+
+/* ================= LOGOUT ================= */
+
+window.logout = async () => {
+  await updateDoc(doc(db, "users", currentUser.uid), {
+    status: "offline"
+  });
+
   await signOut(auth);
 };
 
-import { getDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+/* ================= SONS ================= */
 
-window.addContact = async function () {
-  const email = prompt("Digite o email do contato:");
+function playSound(type) {
+  const audio = new Audio(`assets/${type}.wav`);
+  audio.volume = 0.5;
+  audio.play().catch(() => {});
+}
 
-  if (!email) return;
+document.addEventListener("click", () => {
+  playSound("click");
+});
 
-  const snapshot = await getDocs(collection(db, "users"));
+/* ================= NUDGE FX ================= */
 
-  let found = null;
+function shakeWindow() {
+  const el = document.querySelector(".messenger-window");
+  if (!el) return;
 
-  snapshot.forEach(docSnap => {
-    if (docSnap.data().email === email) {
-      found = { id: docSnap.id, ...docSnap.data() };
+  let i = 0;
+
+  const interval = setInterval(() => {
+    el.style.transform = `translate(${i % 2 ? 6 : -6}px, 0)`;
+    i++;
+
+    if (i > 10) {
+      clearInterval(interval);
+      el.style.transform = "translate(0,0)";
     }
-  });
-
-  if (!found) {
-    alert("Usuário não encontrado!");
-    return;
-  }
-
-  // salva contato
-  await addDoc(collection(db, "contacts"), {
-    owner: currentUser.uid,
-    contactId: found.id,
-    email: found.email
-  });
-
-  alert("Contato adicionado!");
-  loadContacts();
-};
+  }, 40);
+}

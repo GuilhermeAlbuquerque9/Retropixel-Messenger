@@ -12,7 +12,12 @@
 
     <div class="rp-content">
 
-      <label>Seu status:</label>
+      <div class="avatar-box">
+        <img src="assets/avatar.png">
+      </div>
+
+
+      <label>Status:</label>
       <select id="statusSelect">
         <option value="online">Online</option>
         <option value="away">Ausente</option>
@@ -20,9 +25,11 @@
       </select>
 
       <button onclick="saveStatus()">Salvar</button>
+      <button onclick="location.href='app.html'">Voltar</button>
 
     </div>
   </div>
 
   <script type="module" src="app.js"></script>
 </body>
+</html>

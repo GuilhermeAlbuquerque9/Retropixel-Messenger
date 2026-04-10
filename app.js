@@ -26,6 +26,22 @@ let currentUser = null;
 let currentChat = null;
 let unsubscribe = null;
 
+/* ================= HELPERS ================= */
+
+function playClick() {
+  const el = document.getElementById("clickSound");
+  if (!el) return;
+  el.currentTime = 0;
+  el.play().catch(()=>{});
+}
+
+function playNudge() {
+  const el = document.getElementById("nudgeSound");
+  if (!el) return;
+  el.currentTime = 0;
+  el.play().catch(()=>{});
+}
+
 /* ================= AUTH ================= */
 
 onAuthStateChanged(auth, async (user) => {
@@ -45,47 +61,74 @@ onAuthStateChanged(auth, async (user) => {
   if (user && isApp) {
     currentUser = user;
 
-    // garante criação/atualização do usuário
     await setDoc(doc(db, "users", user.uid), {
       email: user.email,
       status: "online"
     }, { merge: true });
 
+    setupAppUI();
     loadContacts();
   }
+
+  if (isIndex) setupLoginUI();
 });
+
+/* ================= LOGIN UI ================= */
+
+function setupLoginUI() {
+  const loginBtn = document.getElementById("loginBtn");
+  const registerBtn = document.getElementById("registerBtn");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", login);
+  }
+
+  if (registerBtn) {
+    registerBtn.addEventListener("click", register);
+  }
+}
+
+/* ================= APP UI ================= */
+
+function setupAppUI() {
+  document.getElementById("logoutBtn")?.addEventListener("click", logout);
+  document.getElementById("sendBtn")?.addEventListener("click", sendMessage);
+  document.getElementById("nudgeBtn")?.addEventListener("click", sendNudge);
+  document.getElementById("addContactBtn")?.addEventListener("click", addContact);
+
+  document.getElementById("sobreBtn")?.addEventListener("click", () => location.href = "sobre.html");
+  document.getElementById("configBtn")?.addEventListener("click", () => location.href = "configuracoes.html");
+  document.getElementById("termosBtn")?.addEventListener("click", () => location.href = "termos.html");
+}
 
 /* ================= LOGIN ================= */
 
-window.login = async function () {
+async function login() {
+  playClick();
+
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
+
+  if (!email || !password) return alert("Preencha tudo!");
+
   try {
-    const email = document.getElementById("email")?.value;
-    const password = document.getElementById("password")?.value;
-
-    if (!email || !password) {
-      alert("Preencha tudo!");
-      return;
-    }
-
     await signInWithEmailAndPassword(auth, email, password);
-
-  } catch (error) {
-    alert("Erro ao entrar: " + error.message);
+  } catch (e) {
+    alert(e.message);
   }
-};
+}
 
 /* ================= REGISTER ================= */
 
-window.register = async function () {
+async function register() {
+  playClick();
+
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
+
+  if (!email || !password) return alert("Preencha tudo!");
+
   try {
-    const email = document.getElementById("email")?.value;
-    const password = document.getElementById("password")?.value;
-
-    if (!email || !password) {
-      alert("Preencha tudo!");
-      return;
-    }
-
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
     await setDoc(doc(db, "users", userCred.user.uid), {
@@ -93,28 +136,23 @@ window.register = async function () {
       status: "online"
     });
 
-    alert("Conta criada! Agora você pode entrar.");
-
-  } catch (error) {
-    if (error.code === "auth/email-already-in-use") {
-      alert("Esse email já existe!");
-    } else {
-      alert("Erro: " + error.message);
-    }
+    alert("Conta criada!");
+  } catch (e) {
+    alert(e.message);
   }
-};
+}
 
 /* ================= LOGOUT ================= */
 
-window.logout = async function () {
-  if (!currentUser) return;
+async function logout() {
+  playClick();
 
   await setDoc(doc(db, "users", currentUser.uid), {
     status: "offline"
   }, { merge: true });
 
   await signOut(auth);
-};
+}
 
 /* ================= CONTATOS ================= */
 
@@ -124,21 +162,17 @@ async function loadContacts() {
 
   el.innerHTML = "Carregando...";
 
-  const q = query(
-    collection(db, "contacts"),
-    where("owner", "==", currentUser.uid)
-  );
-
+  const q = query(collection(db, "contacts"), where("owner", "==", currentUser.uid));
   const snapshot = await getDocs(q);
 
   el.innerHTML = "";
 
-  for (const docSnap of snapshot.docs) {
+  const users = await getDocs(collection(db, "users"));
+
+  snapshot.forEach(docSnap => {
     const data = docSnap.data();
 
-    const usersSnap = await getDocs(collection(db, "users"));
-
-    usersSnap.forEach(u => {
+    users.forEach(u => {
       if (u.id === data.contactId) {
         const userData = u.data();
 
@@ -156,16 +190,14 @@ async function loadContacts() {
         el.appendChild(div);
       }
     });
-  }
-
-  if (el.innerHTML === "") {
-    el.innerHTML = "Nenhum contato ainda 😢";
-  }
+  });
 }
 
 /* ================= ADD CONTATO ================= */
 
-window.addContact = async function () {
+async function addContact() {
+  playClick();
+
   const email = prompt("Email do contato:");
   if (!email) return;
 
@@ -175,23 +207,19 @@ window.addContact = async function () {
 
   users.forEach(u => {
     if (u.data().email === email) {
-      found = { id: u.id, ...u.data() };
+      found = { id: u.id };
     }
   });
 
-  if (!found) {
-    alert("Usuário não encontrado!");
-    return;
-  }
+  if (!found) return alert("Usuário não encontrado!");
 
   await addDoc(collection(db, "contacts"), {
     owner: currentUser.uid,
     contactId: found.id
   });
 
-  alert("Contato adicionado!");
   loadContacts();
-};
+}
 
 /* ================= CHAT ================= */
 
@@ -201,10 +229,7 @@ function getChatId(a, b) {
 
 function openChat(uid, email) {
   currentChat = getChatId(currentUser.uid, uid);
-
-  const title = document.getElementById("chatTitle");
-  if (title) title.innerText = email;
-
+  document.getElementById("chatTitle").innerText = email;
   listenMessages();
 }
 
@@ -214,7 +239,6 @@ function listenMessages() {
   if (unsubscribe) unsubscribe();
 
   const el = document.getElementById("messages");
-  if (!el) return;
 
   const q = query(
     collection(db, "messages", currentChat, "chat"),
@@ -229,7 +253,7 @@ function listenMessages() {
 
       if (msg.type === "nudge") {
         shakeWindow();
-        playSound("nudge");
+        playNudge();
         return;
       }
 
@@ -238,22 +262,19 @@ function listenMessages() {
       div.innerText = msg.text;
 
       el.appendChild(div);
-
-      if (msg.sender !== currentUser.uid) {
-        playSound("receive");
-      }
     });
 
     el.scrollTop = el.scrollHeight;
   });
 }
 
-/* ================= ENVIAR ================= */
+/* ================= SEND ================= */
 
-window.sendMessage = async function () {
+async function sendMessage() {
+  playClick();
+
   const input = document.getElementById("messageInput");
-
-  if (!input || !input.value || !currentChat) return;
+  if (!input.value || !currentChat) return;
 
   await addDoc(collection(db, "messages", currentChat, "chat"), {
     text: input.value,
@@ -261,12 +282,12 @@ window.sendMessage = async function () {
     timestamp: serverTimestamp()
   });
 
-  playSound("send");
-
   input.value = "";
-};
+}
 
-window.sendNudge = async function () {
+async function sendNudge() {
+  playClick();
+
   if (!currentChat) return;
 
   await addDoc(collection(db, "messages", currentChat, "chat"), {
@@ -275,31 +296,17 @@ window.sendNudge = async function () {
     timestamp: serverTimestamp()
   });
 
-  playSound("nudge");
-};
-
-/* ================= SONS ================= */
-
-function playSound(type) {
-  const audio = new Audio(`assets/${type}.wav`);
-  audio.volume = 0.5;
-  audio.play().catch(() => {});
+  playNudge();
 }
-
-document.addEventListener("click", () => {
-  playSound("click");
-});
 
 /* ================= NUDGE FX ================= */
 
 function shakeWindow() {
   const el = document.querySelector(".messenger-window");
-  if (!el) return;
-
   let i = 0;
 
   const interval = setInterval(() => {
-    el.style.transform = `translate(${i % 2 ? 6 : -6}px, 0)`;
+    el.style.transform = `translate(${i % 2 ? 6 : -6}px,0)`;
     i++;
 
     if (i > 10) {

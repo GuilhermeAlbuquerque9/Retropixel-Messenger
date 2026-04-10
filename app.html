@@ -7,37 +7,49 @@
 </head>
 <body class="rp-bg">
 
-  <div class="app-container">
+  <div class="messenger-window">
 
-    <!-- SIDEBAR (CONTATOS) -->
-    <div class="sidebar">
+    <div class="top-bar">
+      Retropixel Messenger™
 
-      <button class="add-contact-btn" onclick="addContact()">
-        ➕ Adicionar contato
-      </button>
-
-      <div class="sidebar-header">
-        Contatos
+      <div>
+        <button onclick="location.href='sobre.html'">Sobre</button>
+        <button onclick="location.href='configuracoes.html'">Config</button>
+        <button onclick="location.href='termos.html'">Termos</button>
+        <button onclick="logout()">Sair</button>
       </div>
-
-      <div id="contacts" class="contacts"></div>
-
-      <button onclick="logout()">Sair</button>
-
     </div>
 
-    <!-- CHAT -->
-    <div class="chat">
+    <div class="messenger-body">
 
-      <div id="chatTitle" class="chat-header">
-        Selecione um contato
+      <!-- CONTATOS -->
+      <div class="contacts-panel">
+
+        <div class="user-info">🟢 Online</div>
+
+        <button class="add-contact-btn" onclick="addContact()">
+          ➕ Adicionar contato
+        </button>
+
+        <div id="contacts" class="contacts-list"></div>
+
       </div>
 
-      <div id="messages" class="messages"></div>
+      <!-- CHAT -->
+      <div class="chat-panel">
 
-      <div class="chat-input">
-        <input id="messageInput" placeholder="Digite uma mensagem...">
-        <button onclick="sendMessage()">Enviar</button>
+        <div id="chatTitle" class="chat-header">
+          Selecione um contato
+        </div>
+
+        <div id="messages" class="messages"></div>
+
+        <div class="chat-input">
+          <input id="messageInput" placeholder="Digite uma mensagem...">
+          <button onclick="sendMessage()">Enviar</button>
+          <button onclick="sendNudge()">⚡</button>
+        </div>
+
       </div>
 
     </div>

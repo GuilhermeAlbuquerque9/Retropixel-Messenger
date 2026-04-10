@@ -17,71 +17,104 @@ import {
   doc,
   setDoc,
   getDocs,
-  updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-/* ================= VARIÁVEIS ================= */
+/* ================= VARS ================= */
 
 let currentUser = null;
 let currentChat = null;
 let unsubscribe = null;
 
-/* ================= LOGIN ================= */
-
-window.login = async () => {
-  const email = document.getElementById("email")?.value;
-  const password = document.getElementById("password")?.value;
-
-  if (!email || !password) {
-    alert("Preencha tudo!");
-    return;
-  }
-
-  await signInWithEmailAndPassword(auth, email, password);
-};
-
-window.register = async () => {
-  const email = document.getElementById("email")?.value;
-  const password = document.getElementById("password")?.value;
-
-  if (!email || !password) {
-    alert("Preencha tudo!");
-    return;
-  }
-
-  const userCred = await createUserWithEmailAndPassword(auth, email, password);
-
-  await setDoc(doc(db, "users", userCred.user.uid), {
-    email,
-    status: "online"
-  });
-};
-
 /* ================= AUTH ================= */
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   const isIndex = location.pathname.includes("index") || location.pathname === "/";
   const isApp = location.pathname.includes("app");
 
-  if (user && isIndex) location.href = "app.html";
-  if (!user && isApp) location.href = "index.html";
+  if (user && isIndex) {
+    location.href = "app.html";
+    return;
+  }
 
-  if (user && isApp) initApp(user);
+  if (!user && isApp) {
+    location.href = "index.html";
+    return;
+  }
+
+  if (user && isApp) {
+    currentUser = user;
+
+    // garante criação/atualização do usuário
+    await setDoc(doc(db, "users", user.uid), {
+      email: user.email,
+      status: "online"
+    }, { merge: true });
+
+    loadContacts();
+  }
 });
 
-/* ================= INIT ================= */
+/* ================= LOGIN ================= */
 
-function initApp(user) {
-  currentUser = user;
+window.login = async function () {
+  try {
+    const email = document.getElementById("email")?.value;
+    const password = document.getElementById("password")?.value;
 
-  // define status online
-  await setDoc(doc(db, "users", user.uid), {
-  status: "online"
-}, { merge: true });
+    if (!email || !password) {
+      alert("Preencha tudo!");
+      return;
+    }
 
-  loadContacts();
-}
+    await signInWithEmailAndPassword(auth, email, password);
+
+  } catch (error) {
+    alert("Erro ao entrar: " + error.message);
+  }
+};
+
+/* ================= REGISTER ================= */
+
+window.register = async function () {
+  try {
+    const email = document.getElementById("email")?.value;
+    const password = document.getElementById("password")?.value;
+
+    if (!email || !password) {
+      alert("Preencha tudo!");
+      return;
+    }
+
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, "users", userCred.user.uid), {
+      email,
+      status: "online"
+    });
+
+    alert("Conta criada! Agora você pode entrar.");
+
+  } catch (error) {
+    if (error.code === "auth/email-already-in-use") {
+      alert("Esse email já existe!");
+    } else {
+      alert("Erro: " + error.message);
+    }
+  }
+};
+
+/* ================= LOGOUT ================= */
+
+window.logout = async function () {
+  if (!currentUser) return;
+
+  await setDoc(doc(db, "users", currentUser.uid), {
+    status: "offline"
+  }, { merge: true });
+
+  await signOut(auth);
+};
 
 /* ================= CONTATOS ================= */
 
@@ -103,9 +136,9 @@ async function loadContacts() {
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
 
-    const users = await getDocs(collection(db, "users"));
+    const usersSnap = await getDocs(collection(db, "users"));
 
-    users.forEach(u => {
+    usersSnap.forEach(u => {
       if (u.id === data.contactId) {
         const userData = u.data();
 
@@ -113,7 +146,7 @@ async function loadContacts() {
         div.className = "contact";
 
         div.innerHTML = `
-          <span class="status ${userData.status}"></span>
+          <span class="status ${userData.status || "offline"}"></span>
           <img src="assets/avatar.png" class="contact-avatar">
           ${userData.email}
         `;
@@ -132,7 +165,7 @@ async function loadContacts() {
 
 /* ================= ADD CONTATO ================= */
 
-window.addContact = async () => {
+window.addContact = async function () {
   const email = prompt("Email do contato:");
   if (!email) return;
 
@@ -175,7 +208,7 @@ function openChat(uid, email) {
   listenMessages();
 }
 
-/* ================= REALTIME ================= */
+/* ================= MENSAGENS ================= */
 
 function listenMessages() {
   if (unsubscribe) unsubscribe();
@@ -194,7 +227,6 @@ function listenMessages() {
     snap.forEach(docSnap => {
       const msg = docSnap.data();
 
-      // NUDGE
       if (msg.type === "nudge") {
         shakeWindow();
         playSound("nudge");
@@ -207,7 +239,6 @@ function listenMessages() {
 
       el.appendChild(div);
 
-      // som ao receber
       if (msg.sender !== currentUser.uid) {
         playSound("receive");
       }
@@ -217,9 +248,9 @@ function listenMessages() {
   });
 }
 
-/* ================= SEND ================= */
+/* ================= ENVIAR ================= */
 
-window.sendMessage = async () => {
+window.sendMessage = async function () {
   const input = document.getElementById("messageInput");
 
   if (!input || !input.value || !currentChat) return;
@@ -235,7 +266,7 @@ window.sendMessage = async () => {
   input.value = "";
 };
 
-window.sendNudge = async () => {
+window.sendNudge = async function () {
   if (!currentChat) return;
 
   await addDoc(collection(db, "messages", currentChat, "chat"), {
@@ -245,31 +276,6 @@ window.sendNudge = async () => {
   });
 
   playSound("nudge");
-};
-
-/* ================= STATUS ================= */
-
-window.saveStatus = async () => {
-  const status = document.getElementById("statusSelect")?.value;
-
-  if (!status) return;
-
-  await updateDoc(doc(db, "users", currentUser.uid), {
-    status
-  });
-
-  alert("Status atualizado!");
-  loadContacts();
-};
-
-/* ================= LOGOUT ================= */
-
-window.logout = async () => {
-  await setDoc(doc(db, "users", currentUser.uid), {
-  status: "offline"
-}, { merge: true });
-
-  await signOut(auth);
 };
 
 /* ================= SONS ================= */

@@ -5,6 +5,7 @@
   <title>Retropixel Messenger™</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="rp-bg">
 
   <div class="messenger-window">
@@ -13,29 +14,25 @@
       Retropixel Messenger™
 
       <div>
-        <button onclick="location.href='sobre.html'">Sobre</button>
-        <button onclick="location.href='configuracoes.html'">Config</button>
-        <button onclick="location.href='termos.html'">Termos</button>
-        <button onclick="logout()">Sair</button>
+        <button id="sobreBtn">Sobre</button>
+        <button id="configBtn">Config</button>
+        <button id="termosBtn">Termos</button>
+        <button id="logoutBtn">Sair</button>
       </div>
     </div>
 
     <div class="messenger-body">
 
-      <!-- CONTATOS -->
       <div class="contacts-panel">
-
         <div class="user-info">🟢 Online</div>
 
-        <button class="add-contact-btn" onclick="addContact()">
+        <button class="add-contact-btn" id="addContactBtn">
           ➕ Adicionar contato
         </button>
 
         <div id="contacts" class="contacts-list"></div>
-
       </div>
 
-      <!-- CHAT -->
       <div class="chat-panel">
 
         <div id="chatTitle" class="chat-header">
@@ -46,8 +43,8 @@
 
         <div class="chat-input">
           <input id="messageInput" placeholder="Digite uma mensagem...">
-          <button onclick="sendMessage()">Enviar</button>
-          <button onclick="sendNudge()">⚡</button>
+          <button id="sendBtn">Enviar</button>
+          <button id="nudgeBtn">⚡</button>
         </div>
 
       </div>
@@ -56,6 +53,11 @@
 
   </div>
 
+  <!-- 🔊 ÁUDIOS -->
+  <audio id="clickSound" src="assets/click.wav" preload="auto"></audio>
+  <audio id="nudgeSound" src="assets/nudge.wav" preload="auto"></audio>
+
   <script type="module" src="app.js"></script>
+
 </body>
 </html>

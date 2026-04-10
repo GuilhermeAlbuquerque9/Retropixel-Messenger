@@ -5,6 +5,7 @@
   <title>Retropixel Messenger™</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="rp-bg">
 
   <div class="rp-window">
@@ -19,10 +20,16 @@
       <input id="email" type="email" placeholder="Email">
       <input id="password" type="password" placeholder="Senha">
 
-      <button onclick="login()">Entrar</button>
-      <button onclick="register()" class="secondary">Criar conta</button>
+      <button id="loginBtn">Entrar</button>
+      <button id="registerBtn" class="secondary">Criar conta</button>
+
     </div>
   </div>
 
+  <!-- 🔊 ÁUDIO -->
+  <audio id="clickSound" src="assets/click.wav" preload="auto"></audio>
+
   <script type="module" src="app.js"></script>
+
 </body>
+</html>

@@ -56,8 +56,10 @@ function playNudge() {
 onAuthStateChanged(auth, async (user) => {
   console.log("🔐 Auth mudou:", user);
 
-  const isIndex = location.pathname.includes("index") || location.pathname === "/";
-  const isApp = location.pathname.includes("app");
+  const path = location.pathname;
+
+const isApp = path.includes("app.html");
+const isIndex = !isApp; // tudo que não é app é index
 
   try {
 

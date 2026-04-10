@@ -76,9 +76,9 @@ function initApp(user) {
   currentUser = user;
 
   // define status online
-  updateDoc(doc(db, "users", user.uid), {
-    status: "online"
-  });
+  await setDoc(doc(db, "users", user.uid), {
+  status: "online"
+}, { merge: true });
 
   loadContacts();
 }
@@ -265,9 +265,9 @@ window.saveStatus = async () => {
 /* ================= LOGOUT ================= */
 
 window.logout = async () => {
-  await updateDoc(doc(db, "users", currentUser.uid), {
-    status: "offline"
-  });
+  await setDoc(doc(db, "users", currentUser.uid), {
+  status: "offline"
+}, { merge: true });
 
   await signOut(auth);
 };

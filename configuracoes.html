@@ -5,37 +5,26 @@
   <title>Configurações</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="rp-bg">
 
-<div class="messenger-window">
+  <div class="rp-window">
+    <div class="rp-title">Configurações</div>
 
-  <div class="topbar">
-    <span>Configurações</span>
-    <button onclick="location.href='app.html'">← Voltar</button>
+    <div class="rp-content">
+
+      <label>Status:</label>
+      <select id="statusSelect">
+        <option value="online">🟢 Online</option>
+        <option value="away">🔴 Ausente</option>
+        <option value="busy">⛔ Ocupado</option>
+      </select>
+
+      <button onclick="saveStatus()">Salvar</button>
+      <button onclick="location.href='app.html'">Voltar</button>
+
+    </div>
   </div>
 
-  <div class="config-content">
-
-    <label>Nome:</label>
-    <input id="configName">
-
-    <label>Status:</label>
-    <select id="configStatus">
-      <option value="online">🟢 Online</option>
-      <option value="offline">🔴 Offline</option>
-      <option value="dnd">⛔ Não perturbe</option>
-      <option value="auto">🤖 Automático</option>
-    </select>
-
-    <label>Bio:</label>
-    <textarea id="configBio"></textarea>
-
-    <button onclick="updateProfile()">Salvar</button>
-
-  </div>
-
-</div>
-
-<script type="module" src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

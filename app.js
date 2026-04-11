@@ -17,298 +17,341 @@ import {
   doc,
   setDoc,
   getDocs,
-  where,
-  deleteDoc,
-  getDoc
+  where
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-/* VARS */
+/* ================= VARS ================= */
+
 let currentUser = null;
 let currentChat = null;
-let currentContactName = "";
 let unsubscribe = null;
-let typingTimeout = null;
 
-/* INIT */
+/* ================= INIT (ANTI-BUG) ================= */
+
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 DOM pronto");
+
   setupLoginUI();
   setupAppUI();
 });
 
-/* SOUND */
-function playSound(id) {
-  const el = document.getElementById(id);
+/* ================= HELPERS ================= */
+
+function playClick() {
+  const el = document.getElementById("clickSound");
   if (!el) return;
   el.currentTime = 0;
   el.play().catch(()=>{});
 }
 
-/* STATUS */
-function getStatusEmoji(status) {
-  return {
-    online: "🟢",
-    offline: "🔴",
-    dnd: "⛔",
-    auto: "🤖"
-  }[status] || "🔴";
+function playNudge() {
+  const el = document.getElementById("nudgeSound");
+  if (!el) return;
+  el.currentTime = 0;
+  el.play().catch(()=>{});
 }
 
-/* AUTH */
+/* ================= AUTH ================= */
+
 onAuthStateChanged(auth, async (user) => {
+  console.log("🔐 Auth mudou:", user);
+
   const path = location.pathname;
+
   const isApp = path.includes("app.html");
-  const isConfig = path.includes("configuracoes.html");
+  const isIndex = !isApp;
 
-  if (!user && (isApp || isConfig)) {
-    location.href = "index.html";
-    return;
-  }
+  try {
 
-  if (user) {
-    currentUser = user;
+    if (user && isIndex) {
+      console.log("➡️ Indo pro app...");
+      location.href = "app.html";
+      return;
+    }
 
-    await setDoc(doc(db, "users", user.uid), {
-      email: user.email,
-      name: user.email.split("@")[0],
-      status: "online"
-    }, { merge: true });
+    if (!user && isApp) {
+      console.log("⬅️ Voltando pro login...");
+      location.href = "index.html";
+      return;
+    }
 
-    if (isApp) loadContacts();
-    if (isConfig) loadConfig();
+    if (user && isApp) {
+      currentUser = user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        status: "online"
+      }, { merge: true });
+
+      loadContacts();
+    }
+
+  } catch (e) {
+    console.error("Erro no Auth:", e);
   }
 });
 
-/* CONFIG LOAD */
-async function loadConfig() {
-  const docSnap = await getDoc(doc(db, "users", currentUser.uid));
-  const data = docSnap.data();
+/* ================= LOGIN UI ================= */
 
-  document.getElementById("configName").value = data.name || "";
-  document.getElementById("configStatus").value = data.status || "online";
-  document.getElementById("configBio").value = data.bio || "";
-}
-
-/* UPDATE PROFILE */
-window.updateProfile = async function () {
-  const name = document.getElementById("configName").value;
-  const status = document.getElementById("configStatus").value;
-  const bio = document.getElementById("configBio").value;
-
-  await setDoc(doc(db, "users", currentUser.uid), {
-    name, status, bio
-  }, { merge: true });
-
-  alert("Salvo!");
-};
-
-/* LOGIN UI */
 function setupLoginUI() {
-  document.getElementById("loginBtn")?.addEventListener("click", login);
-  document.getElementById("registerBtn")?.addEventListener("click", register);
+  const loginBtn = document.getElementById("loginBtn");
+  const registerBtn = document.getElementById("registerBtn");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", login);
+  }
+
+  if (registerBtn) {
+    registerBtn.addEventListener("click", register);
+  }
 }
 
-/* APP UI */
+/* ================= APP UI ================= */
+
 function setupAppUI() {
   document.getElementById("logoutBtn")?.addEventListener("click", logout);
   document.getElementById("sendBtn")?.addEventListener("click", sendMessage);
   document.getElementById("nudgeBtn")?.addEventListener("click", sendNudge);
   document.getElementById("addContactBtn")?.addEventListener("click", addContact);
 
-  document.getElementById("configBtn")?.addEventListener("click", () => location.href="configuracoes.html");
-
-  document.getElementById("messageInput")?.addEventListener("input", handleTyping);
+  document.getElementById("sobreBtn")?.addEventListener("click", () => location.href = "sobre.html");
+  document.getElementById("configBtn")?.addEventListener("click", () => location.href = "configuracoes.html");
+  document.getElementById("termosBtn")?.addEventListener("click", () => location.href = "termos.html");
 }
 
-/* LOGIN */
+/* ================= LOGIN ================= */
+
 async function login() {
-  playSound("clickSound");
-  const email = emailInput.value;
-  const password = passwordInput.value;
-  await signInWithEmailAndPassword(auth, email, password);
+  playClick();
+
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
+
+  if (!email || !password) return alert("Preencha tudo!");
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (e) {
+    console.error(e);
+    alert(e.message);
+  }
 }
 
-/* REGISTER */
+/* ================= REGISTER ================= */
+
 async function register() {
-  playSound("clickSound");
-  const email = emailInput.value;
-  const password = passwordInput.value;
-  await createUserWithEmailAndPassword(auth, email, password);
+  playClick();
+
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
+
+  if (!email || !password) return alert("Preencha tudo!");
+
+  try {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, "users", userCred.user.uid), {
+      email,
+      status: "online"
+    });
+
+    alert("Conta criada!");
+  } catch (e) {
+    console.error(e);
+    alert(e.message);
+  }
 }
 
-/* LOGOUT */
+/* ================= LOGOUT ================= */
+
 async function logout() {
-  playSound("clickSound");
+  playClick();
+
+  if (!currentUser) return;
+
+  await setDoc(doc(db, "users", currentUser.uid), {
+    status: "offline"
+  }, { merge: true });
+
   await signOut(auth);
 }
 
-/* CONTACTS */
+/* ================= CONTATOS ================= */
+
 async function loadContacts() {
   const el = document.getElementById("contacts");
-  el.innerHTML = "";
+  if (!el || !currentUser) return;
 
-  const contacts = await getDocs(query(collection(db,"contacts"), where("owner","==",currentUser.uid)));
-  const users = await getDocs(collection(db,"users"));
+  el.innerHTML = "Carregando...";
 
-  contacts.forEach(c => {
+  try {
+
+    const q = query(collection(db, "contacts"), where("owner", "==", currentUser.uid));
+    const snapshot = await getDocs(q);
+
+    const users = await getDocs(collection(db, "users"));
+
+    el.innerHTML = "";
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+
+      users.forEach(u => {
+        if (u.id === data.contactId) {
+          const userData = u.data();
+
+          const div = document.createElement("div");
+          div.className = "contact";
+
+          div.innerHTML = `
+            <span class="status ${userData.status || "offline"}"></span>
+            <img src="assets/avatar.png" class="contact-avatar">
+            ${userData.email}
+          `;
+
+          div.onclick = () => openChat(u.id, userData.email);
+
+          el.appendChild(div);
+        }
+      });
+    });
+
+  } catch (e) {
+    console.error("Erro ao carregar contatos:", e);
+  }
+}
+
+/* ================= ADD CONTATO ================= */
+
+async function addContact() {
+  playClick();
+
+  const email = prompt("Email do contato:");
+  if (!email) return;
+
+  try {
+
+    const users = await getDocs(collection(db, "users"));
+
+    let found = null;
+
     users.forEach(u => {
-      if (u.id === c.data().contactId) {
-        const d = u.data();
-
-        const div = document.createElement("div");
-        div.className = "contact";
-
-        div.innerHTML = `
-          ${getStatusEmoji(d.status)}
-          <img src="assets/avatar.png">
-          ${d.name || d.email}
-        `;
-
-        div.onclick = () => {
-          playSound("clickSound");
-          openChat(u.id, d.name || d.email);
-        };
-
-        el.appendChild(div);
+      if (u.data().email === email) {
+        found = { id: u.id };
       }
     });
-  });
+
+    if (!found) return alert("Usuário não encontrado!");
+
+    await addDoc(collection(db, "contacts"), {
+      owner: currentUser.uid,
+      contactId: found.id
+    });
+
+    loadContacts();
+
+  } catch (e) {
+    console.error("Erro ao adicionar contato:", e);
+  }
 }
 
-/* ADD CONTACT */
-async function addContact() {
-  playSound("clickSound");
+/* ================= CHAT ================= */
 
-  const email = prompt("Email:");
-  const users = await getDocs(collection(db,"users"));
-
-  let found = null;
-  users.forEach(u=>{
-    if(u.data().email===email) found=u;
-  });
-
-  if(!found) return alert("Não encontrado");
-
-  await addDoc(collection(db,"contacts"),{
-    owner: currentUser.uid,
-    contactId: found.id
-  });
-
-  loadContacts();
+function getChatId(a, b) {
+  return [a, b].sort().join("_");
 }
 
-/* CHAT */
-function getChatId(a,b){ return [a,b].sort().join("_"); }
+function openChat(uid, email) {
+  currentChat = getChatId(currentUser.uid, uid);
 
-function openChat(uid,name){
-  currentChat = getChatId(currentUser.uid,uid);
-  currentContactName = name;
-
-  document.getElementById("chatTitle").innerText = name;
+  const title = document.getElementById("chatTitle");
+  if (title) title.innerText = email;
 
   listenMessages();
 }
 
-/* TYPING */
-async function handleTyping(){
-  if(!currentChat) return;
+/* ================= MENSAGENS ================= */
 
-  await setDoc(doc(db,"typing",currentChat+"_"+currentUser.uid),{
-    typing:true,
-    time:Date.now()
-  });
-
-  clearTimeout(typingTimeout);
-
-  typingTimeout=setTimeout(()=>{
-    setDoc(doc(db,"typing",currentChat+"_"+currentUser.uid),{
-      typing:false
-    });
-  },2000);
-}
-
-/* MESSAGES */
-function listenMessages(){
-  if(unsubscribe) unsubscribe();
+function listenMessages() {
+  if (unsubscribe) unsubscribe();
 
   const el = document.getElementById("messages");
+  if (!el || !currentChat) return;
 
-  unsubscribe = onSnapshot(query(collection(db,"messages",currentChat,"chat"),orderBy("timestamp")), snap=>{
-    el.innerHTML="";
+  const q = query(
+    collection(db, "messages", currentChat, "chat"),
+    orderBy("timestamp")
+  );
 
-    snap.forEach(docSnap=>{
-      const msg=docSnap.data();
+  unsubscribe = onSnapshot(q, snap => {
+    el.innerHTML = "";
 
-      if(msg.type==="nudge"){
+    snap.forEach(docSnap => {
+      const msg = docSnap.data();
+
+      if (msg.type === "nudge") {
         shakeWindow();
-        if(msg.sender!==currentUser.uid) playSound("nudgeSound");
+        playNudge();
         return;
       }
 
-      const div=document.createElement("div");
-      div.className = msg.sender===currentUser.uid ? "msg me":"msg";
+      const div = document.createElement("div");
+      div.className = msg.sender === currentUser.uid ? "msg me" : "msg";
       div.innerText = msg.text;
-
-      if(msg.sender===currentUser.uid){
-        const btn=document.createElement("button");
-        btn.innerText="x";
-        btn.className="delete-btn";
-        btn.onclick=()=>deleteDoc(doc(db,"messages",currentChat,"chat",docSnap.id));
-        div.appendChild(btn);
-      }
 
       el.appendChild(div);
     });
-  });
 
-  /* TYPING VIEW */
-  onSnapshot(collection(db,"typing"), snap=>{
-    let typing=false;
-
-    snap.forEach(d=>{
-      if(d.id.startsWith(currentChat) && !d.id.endsWith(currentUser.uid) && d.data().typing){
-        typing=true;
-      }
-    });
-
-    document.getElementById("chatTitle").innerText = typing ? "Digitando..." : currentContactName;
+    el.scrollTop = el.scrollHeight;
   });
 }
 
-/* SEND */
-async function sendMessage(){
-  playSound("sendSound");
+/* ================= SEND ================= */
 
-  const input=document.getElementById("messageInput");
-  if(!input.value) return;
+async function sendMessage() {
+  playClick();
 
-  await addDoc(collection(db,"messages",currentChat,"chat"),{
-    text:input.value,
-    sender:currentUser.uid,
-    timestamp:serverTimestamp()
+  const input = document.getElementById("messageInput");
+  if (!input || !input.value || !currentChat) return;
+
+  await addDoc(collection(db, "messages", currentChat, "chat"), {
+    text: input.value,
+    sender: currentUser.uid,
+    timestamp: serverTimestamp()
   });
 
-  await setDoc(doc(db,"typing",currentChat+"_"+currentUser.uid),{typing:false});
-
-  input.value="";
+  input.value = "";
 }
 
-/* NUDGE */
-async function sendNudge(){
-  playSound("nudgeSound");
+async function sendNudge() {
+  playClick();
 
-  await addDoc(collection(db,"messages",currentChat,"chat"),{
-    type:"nudge",
-    sender:currentUser.uid,
-    timestamp:serverTimestamp()
+  if (!currentChat) return;
+
+  await addDoc(collection(db, "messages", currentChat, "chat"), {
+    type: "nudge",
+    sender: currentUser.uid,
+    timestamp: serverTimestamp()
   });
+
+  playNudge();
 }
 
-/* FX */
-function shakeWindow(){
-  const el=document.querySelector(".messenger-window");
-  let i=0;
-  const int=setInterval(()=>{
-    el.style.transform=`translate(${i%2?6:-6}px,0)`;
-    if(i++>10){clearInterval(int);el.style.transform="";}
-  },40);
+/* ================= NUDGE FX ================= */
+
+function shakeWindow() {
+  const el = document.querySelector(".messenger-window");
+  if (!el) return;
+
+  let i = 0;
+
+  const interval = setInterval(() => {
+    el.style.transform = `translate(${i % 2 ? 6 : -6}px,0)`;
+    i++;
+
+    if (i > 10) {
+      clearInterval(interval);
+      el.style.transform = "translate(0,0)";
+    }
+  }, 40);
 }

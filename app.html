@@ -5,60 +5,57 @@
   <title>Retropixel Messenger™</title>
   <link rel="stylesheet" href="style.css">
 </head>
+<body>
 
-<body class="rp-bg">
+<div class="messenger-window">
 
-  <div class="messenger-window">
+  <!-- TOPO -->
+  <div class="topbar">
+    <span>Retropixel Messenger™</span>
 
-    <div class="top-bar">
-      Retropixel Messenger™
+    <div class="top-buttons">
+      <button id="sobreBtn">Sobre</button>
+      <button id="configBtn">Config</button>
+      <button id="termosBtn">Termos</button>
+      <button id="logoutBtn">Sair</button>
+    </div>
+  </div>
 
-      <div>
-        <button id="sobreBtn">Sobre</button>
-        <button id="configBtn">Config</button>
-        <button id="termosBtn">Termos</button>
-        <button id="logoutBtn">Sair</button>
-      </div>
+  <!-- CONTEÚDO -->
+  <div class="main">
+
+    <!-- CONTATOS -->
+    <div class="sidebar">
+      <button id="addContactBtn">+ Adicionar contato</button>
+      <div id="contacts"></div>
     </div>
 
-    <div class="messenger-body">
+    <!-- CHAT -->
+    <div class="chat">
 
-      <div class="contacts-panel">
-        <div class="user-info">🟢 Online</div>
-
-        <button class="add-contact-btn" id="addContactBtn">
-          ➕ Adicionar contato
-        </button>
-
-        <div id="contacts" class="contacts-list"></div>
+      <div id="chatTitle" class="chat-title">
+        Selecione um contato
       </div>
 
-      <div class="chat-panel">
+      <div id="messages" class="messages"></div>
 
-        <div id="chatTitle" class="chat-header">
-          Selecione um contato
-        </div>
-
-        <div id="messages" class="messages"></div>
-
-        <div class="chat-input">
-          <input id="messageInput" placeholder="Digite uma mensagem...">
-          <button id="sendBtn">Enviar</button>
-          <button id="nudgeBtn">⚡</button>
-        </div>
-
+      <div class="input-area">
+        <input id="messageInput" placeholder="Digite uma mensagem...">
+        <button id="sendBtn">Enviar</button>
+        <button id="nudgeBtn">⚡</button>
       </div>
 
     </div>
 
   </div>
 
-  <!-- 🔊 ÁUDIOS -->
-  <audio id="clickSound" src="assets/click.wav"></audio>
-  <audio id="sendSound" src="assets/aeroclick.wav"></audio>
-  <audio id="nudgeSound" src="assets/nudge.wav"></audio>
+</div>
 
-  <script type="module" src="app.js"></script>
+<!-- SONS -->
+<audio id="clickSound" src="assets/click.wav"></audio>
+<audio id="sendSound" src="assets/aeroclick.wav"></audio>
+<audio id="nudgeSound" src="assets/nudge.wav"></audio>
 
+<script type="module" src="app.js"></script>
 </body>
 </html>

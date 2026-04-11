@@ -496,3 +496,17 @@ a:hover {
   border-radius: 4px;
   margin-right: 6px;
 }
+
+.delete-btn {
+  background: linear-gradient(to bottom, #ff5c5c, #cc0000);
+  border: 1px solid #990000;
+  color: white;
+  border-radius: 4px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: linear-gradient(to bottom, #ff7a7a, #ff0000);
+  box-shadow: 0 0 6px rgba(255,0,0,0.6);
+}

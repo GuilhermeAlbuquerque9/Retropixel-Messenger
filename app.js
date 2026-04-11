@@ -17,7 +17,8 @@ import {
   doc,
   setDoc,
   getDocs,
-  where
+  where,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 /* ================= VARS ================= */
@@ -26,11 +27,10 @@ let currentUser = null;
 let currentChat = null;
 let unsubscribe = null;
 
-/* ================= INIT (ANTI-BUG) ================= */
+/* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 DOM pronto");
-
   setupLoginUI();
   setupAppUI();
 });
@@ -51,15 +51,24 @@ function playNudge() {
   el.play().catch(()=>{});
 }
 
+function getStatusEmoji(status) {
+  switch (status) {
+    case "online": return "🟢";
+    case "offline": return "🔴";
+    case "dnd": return "⛔";
+    case "auto": return "🤖";
+    default: return "🔴";
+  }
+}
+
 /* ================= AUTH ================= */
 
 onAuthStateChanged(auth, async (user) => {
   console.log("🔐 Auth mudou:", user);
 
   const path = location.pathname;
-
-const isApp = path.includes("app.html");
-const isIndex = !isApp; // tudo que não é app é index
+  const isApp = path.includes("app.html");
+  const isIndex = !isApp;
 
   try {
 
@@ -78,7 +87,8 @@ const isIndex = !isApp; // tudo que não é app é index
 
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
-        status: "online"
+        status: "online",
+        lastActive: Date.now()
       }, { merge: true });
 
       loadContacts();
@@ -95,13 +105,8 @@ function setupLoginUI() {
   const loginBtn = document.getElementById("loginBtn");
   const registerBtn = document.getElementById("registerBtn");
 
-  if (loginBtn) {
-    loginBtn.addEventListener("click", login);
-  }
-
-  if (registerBtn) {
-    registerBtn.addEventListener("click", register);
-  }
+  loginBtn?.addEventListener("click", login);
+  registerBtn?.addEventListener("click", register);
 }
 
 /* ================= APP UI ================= */
@@ -115,6 +120,16 @@ function setupAppUI() {
   document.getElementById("sobreBtn")?.addEventListener("click", () => location.href = "sobre.html");
   document.getElementById("configBtn")?.addEventListener("click", () => location.href = "configuracoes.html");
   document.getElementById("termosBtn")?.addEventListener("click", () => location.href = "termos.html");
+
+  /* DIGITANDO */
+  document.getElementById("messageInput")?.addEventListener("input", async () => {
+    if (!currentChat || !currentUser) return;
+
+    await setDoc(doc(db, "typing", currentChat + "_" + currentUser.uid), {
+      typing: true,
+      time: Date.now()
+    });
+  });
 }
 
 /* ================= LOGIN ================= */
@@ -183,10 +198,8 @@ async function loadContacts() {
   el.innerHTML = "Carregando...";
 
   try {
-
     const q = query(collection(db, "contacts"), where("owner", "==", currentUser.uid));
     const snapshot = await getDocs(q);
-
     const users = await getDocs(collection(db, "users"));
 
     el.innerHTML = "";
@@ -202,7 +215,7 @@ async function loadContacts() {
           div.className = "contact";
 
           div.innerHTML = `
-            <span class="status ${userData.status || "offline"}"></span>
+            <span>${getStatusEmoji(userData.status)}</span>
             <img src="assets/avatar.png" class="contact-avatar">
             ${userData.email}
           `;
@@ -228,7 +241,6 @@ async function addContact() {
   if (!email) return;
 
   try {
-
     const users = await getDocs(collection(db, "users"));
 
     let found = null;
@@ -295,12 +307,38 @@ function listenMessages() {
 
       const div = document.createElement("div");
       div.className = msg.sender === currentUser.uid ? "msg me" : "msg";
-      div.innerText = msg.text;
+
+      div.innerHTML = `
+        ${msg.text}
+        <button class="delete-btn">x</button>
+      `;
+
+      div.querySelector(".delete-btn").onclick = async () => {
+        await deleteDoc(doc(db, "messages", currentChat, "chat", docSnap.id));
+      };
 
       el.appendChild(div);
     });
 
     el.scrollTop = el.scrollHeight;
+  });
+
+  /* DIGITANDO LISTENER */
+  const typingRef = collection(db, "typing");
+
+  onSnapshot(typingRef, snap => {
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+
+      if (
+        docSnap.id.startsWith(currentChat) &&
+        data.typing &&
+        Date.now() - data.time < 3000
+      ) {
+        const el = document.getElementById("chatTitle");
+        if (el) el.innerText = "Digitando...";
+      }
+    });
   });
 }
 

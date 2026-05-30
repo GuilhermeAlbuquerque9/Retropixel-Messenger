@@ -205,7 +205,7 @@ async function loadContacts() {
 
           div.innerHTML = `
             <span class="status ${userData.status || "offline"}"></span>
-            <img src="assets/avatar.png" class="contact-avatar">
+            <img src="assets/RPM_logo.png" class="contact-avatar">
             ${userData.email}
           `;
 

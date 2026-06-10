@@ -357,11 +357,12 @@ a:hover {
   cursor: pointer;
 }
 
-/* STATUS BOLINHA */
+/* STATUS BOLINHA
 .contact::before {
   content: "🟢";
   margin-right: 8px;
 }
+*/
 
 /* HOVER */
 .contact:hover {

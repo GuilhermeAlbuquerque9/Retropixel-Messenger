@@ -10,11 +10,7 @@ body {
 
 .rp-bg {
   height: 100vh;
-  background: linear-gradient(
-    to bottom,
-    #ffffff,
-    #e9f1fb
-  );
+  background: linear-gradient( to bottom, #d0e2f9 , #7eb3f4 );
 }
 
 /* ========================= */

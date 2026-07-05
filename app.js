@@ -26,256 +26,335 @@ let currentUser = null;
 let currentChat = null;
 let unsubscribe = null;
 
-/* ================= INIT (ANTI-BUG) ================= */
+/* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+
   console.log("🚀 DOM pronto");
 
   setupLoginUI();
   setupAppUI();
+
 });
 
 /* ================= HELPERS ================= */
 
 function playClick() {
+
   const el = document.getElementById("clickSound");
+
   if (!el) return;
+
   el.currentTime = 0;
-  el.play().catch(()=>{});
+
+  el.play().catch(() => {});
+
 }
 
 function playNudge() {
+
   const el = document.getElementById("nudgeSound");
+
   if (!el) return;
+
   el.currentTime = 0;
-  el.play().catch(()=>{});
+
+  el.play().catch(() => {});
+
 }
 
 /* ================= AUTH ================= */
 
 onAuthStateChanged(auth, async (user) => {
+
   console.log("🔐 Auth mudou:", user);
 
-  const path = location.pathname;
+  const path = location.pathname.toLowerCase();
 
-  const isApp = path.includes("app.html");
-  const isIndex = !isApp;
+  const isIndex =
+    path.endsWith("/") ||
+    path.endsWith("/index.html") ||
+    path.includes("index.html");
+
+  const isProtected =
+    path.includes("app.html") ||
+    path.includes("configuracoes.html") ||
+    path.includes("sobre.html") ||
+    path.includes("termos.html");
 
   try {
 
     if (user && isIndex) {
-      console.log("➡️ Indo pro app...");
+
       location.href = "app.html";
       return;
+
     }
 
-    if (!user && isApp) {
-      console.log("⬅️ Voltando pro login...");
+    if (!user && isProtected) {
+
       location.href = "index.html";
       return;
+
     }
 
-    if (user && isApp) {
+    if (user) {
+
       currentUser = user;
 
       await setDoc(doc(db, "users", user.uid), {
+
         email: user.email,
         status: "online"
+
       }, { merge: true });
 
-      loadContacts();
+      if (path.includes("app.html")) {
+
+        loadContacts();
+
+      }
+
     }
 
-  } catch (e) {
-    console.error("Erro no Auth:", e);
   }
+
+  catch (e) {
+
+    console.error("Erro no Auth:", e);
+
+  }
+
 });
 
 /* ================= LOGIN UI ================= */
 
 function setupLoginUI() {
-  const loginBtn = document.getElementById("loginBtn");
-  const registerBtn = document.getElementById("registerBtn");
 
-  if (loginBtn) {
-    loginBtn.addEventListener("click", login);
-  }
+  document
+    .getElementById("loginBtn")
+    ?.addEventListener("click", login);
 
-  if (registerBtn) {
-    registerBtn.addEventListener("click", register);
-  }
+  document
+    .getElementById("registerBtn")
+    ?.addEventListener("click", register);
+
 }
 
 /* ================= APP UI ================= */
 
 function setupAppUI() {
-  document.getElementById("logoutBtn")?.addEventListener("click", logout);
-  document.getElementById("sendBtn")?.addEventListener("click", sendMessage);
-  document.getElementById("nudgeBtn")?.addEventListener("click", sendNudge);
-  document.getElementById("addContactBtn")?.addEventListener("click", addContact);
 
-  document.getElementById("sobreBtn")?.addEventListener("click", () => location.href = "sobre.html");
-  document.getElementById("configBtn")?.addEventListener("click", () => location.href = "configuracoes.html");
-  document.getElementById("termosBtn")?.addEventListener("click", () => location.href = "termos.html");
+  document
+    .getElementById("logoutBtn")
+    ?.addEventListener("click", logout);
+
+  document
+    .getElementById("sendBtn")
+    ?.addEventListener("click", sendMessage);
+
+  document
+    .getElementById("nudgeBtn")
+    ?.addEventListener("click", sendNudge);
+
+  document
+    .getElementById("addContactBtn")
+    ?.addEventListener("click", addContact);
+
+  document
+    .getElementById("sobreBtn")
+    ?.addEventListener("click", () => {
+
+      playClick();
+      location.href = "sobre.html";
+
+    });
+
+  document
+    .getElementById("configBtn")
+    ?.addEventListener("click", () => {
+
+      playClick();
+      location.href = "configuracoes.html";
+
+    });
+
+  document
+    .getElementById("termosBtn")
+    ?.addEventListener("click", () => {
+
+      playClick();
+      location.href = "termos.html";
+
+    });
+
 }
 
 /* ================= LOGIN ================= */
 
 async function login() {
+
   playClick();
 
-  const email = document.getElementById("email")?.value;
-  const password = document.getElementById("password")?.value;
+  const email =
+    document.getElementById("email")?.value.trim();
 
-  if (!email || !password) return alert("Preencha tudo!");
+  const password =
+    document.getElementById("password")?.value;
+
+  if (!email || !password) {
+
+    alert("Preencha todos os campos.");
+    return;
+
+  }
 
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (e) {
-    console.error(e);
-    alert(e.message);
+
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
   }
+
+  catch (e) {
+
+    console.error(e);
+
+    alert(e.message);
+
+  }
+
 }
 
 /* ================= REGISTER ================= */
 
 async function register() {
+
   playClick();
 
-  const email = document.getElementById("email")?.value;
-  const password = document.getElementById("password")?.value;
+  const email =
+    document.getElementById("email")?.value.trim();
 
-  if (!email || !password) return alert("Preencha tudo!");
+  const password =
+    document.getElementById("password")?.value;
+
+  if (!email || !password) {
+
+    alert("Preencha todos os campos.");
+    return;
+
+  }
 
   try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-    await setDoc(doc(db, "users", userCred.user.uid), {
-      email,
-      status: "online"
-    });
+    const userCred =
+      await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    await setDoc(
+      doc(db, "users", userCred.user.uid),
+      {
+
+        email,
+        status: "online"
+
+      },
+      {
+        merge: true
+      }
+    );
 
     alert("Conta criada!");
-  } catch (e) {
-    console.error(e);
-    alert(e.message);
+
   }
+
+  catch (e) {
+
+    console.error(e);
+
+    alert(e.message);
+
+  }
+
 }
 
 /* ================= LOGOUT ================= */
 
 async function logout() {
+
   playClick();
 
   if (!currentUser) return;
 
-  await setDoc(doc(db, "users", currentUser.uid), {
-    status: "offline"
-  }, { merge: true });
-
-  await signOut(auth);
-}
-
-/* ================= CONTATOS ================= */
-
-async function loadContacts() {
-  const el = document.getElementById("contacts");
-  if (!el || !currentUser) return;
-
-  el.innerHTML = "Carregando...";
-
   try {
 
-    const q = query(collection(db, "contacts"), where("owner", "==", currentUser.uid));
-    const snapshot = await getDocs(q);
+    await setDoc(
+      doc(db, "users", currentUser.uid),
+      {
 
-    const users = await getDocs(collection(db, "users"));
+        status: "offline"
 
-    el.innerHTML = "";
-
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-
-      users.forEach(u => {
-        if (u.id === data.contactId) {
-          const userData = u.data();
-
-          const div = document.createElement("div");
-          div.className = "contact";
-
-          div.innerHTML = `
-            <span class="status ${userData.status || "offline"}"></span>
-            <img src="assets/avatar.png" class="contact-avatar">
-            ${userData.email}
-          `;
-
-          div.onclick = () => openChat(u.id, userData.email);
-
-          el.appendChild(div);
-        }
-      });
-    });
-
-  } catch (e) {
-    console.error("Erro ao carregar contatos:", e);
-  }
-}
-
-/* ================= ADD CONTATO ================= */
-
-async function addContact() {
-  playClick();
-
-  const email = prompt("Email do contato:");
-  if (!email) return;
-
-  try {
-
-    const users = await getDocs(collection(db, "users"));
-
-    let found = null;
-
-    users.forEach(u => {
-      if (u.data().email === email) {
-        found = { id: u.id };
+      },
+      {
+        merge: true
       }
-    });
+    );
 
-    if (!found) return alert("Usuário não encontrado!");
+    await signOut(auth);
 
-    await addDoc(collection(db, "contacts"), {
-      owner: currentUser.uid,
-      contactId: found.id
-    });
-
-    loadContacts();
-
-  } catch (e) {
-    console.error("Erro ao adicionar contato:", e);
   }
+
+  catch (e) {
+
+    console.error(e);
+
+  }
+
 }
 
 /* ================= CHAT ================= */
 
 function getChatId(a, b) {
+
   return [a, b].sort().join("_");
+
 }
 
 function openChat(uid, email) {
+
   currentChat = getChatId(currentUser.uid, uid);
 
   const title = document.getElementById("chatTitle");
-  if (title) title.innerText = email;
+
+  if (title) {
+
+    title.innerText = email;
+
+  }
 
   listenMessages();
+
 }
 
 /* ================= MENSAGENS ================= */
 
 function listenMessages() {
-  if (unsubscribe) unsubscribe();
+
+  if (unsubscribe) {
+
+    unsubscribe();
+    unsubscribe = null;
+
+  }
 
   const el = document.getElementById("messages");
+
   if (!el || !currentChat) return;
 
   const q = query(
@@ -283,75 +362,175 @@ function listenMessages() {
     orderBy("timestamp")
   );
 
-  unsubscribe = onSnapshot(q, snap => {
+  unsubscribe = onSnapshot(q, snapshot => {
+
     el.innerHTML = "";
 
-    snap.forEach(docSnap => {
+    snapshot.forEach(docSnap => {
+
       const msg = docSnap.data();
 
+      /* NUDGE */
+
       if (msg.type === "nudge") {
+
         shakeWindow();
-        playNudge();
+
+        if (msg.sender !== currentUser.uid) {
+
+          playNudge();
+
+        }
+
         return;
+
       }
 
       const div = document.createElement("div");
-      div.className = msg.sender === currentUser.uid ? "msg me" : "msg";
-      div.innerText = msg.text;
+
+      div.className =
+        msg.sender === currentUser.uid
+          ? "msg me"
+          : "msg";
+
+      div.textContent = msg.text;
 
       el.appendChild(div);
+
     });
 
     el.scrollTop = el.scrollHeight;
+
   });
+
 }
 
-/* ================= SEND ================= */
+/* ================= ENVIAR ================= */
 
 async function sendMessage() {
+
   playClick();
 
   const input = document.getElementById("messageInput");
-  if (!input || !input.value || !currentChat) return;
 
-  await addDoc(collection(db, "messages", currentChat, "chat"), {
-    text: input.value,
-    sender: currentUser.uid,
-    timestamp: serverTimestamp()
-  });
+  if (!input) return;
 
-  input.value = "";
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  if (!currentChat) {
+
+    alert("Selecione um contato.");
+
+    return;
+
+  }
+
+  try {
+
+    await addDoc(
+      collection(db, "messages", currentChat, "chat"),
+      {
+
+        text,
+        sender: currentUser.uid,
+        timestamp: serverTimestamp()
+
+      }
+    );
+
+    input.value = "";
+
+    input.focus();
+
+  }
+
+  catch (e) {
+
+    console.error("Erro ao enviar mensagem:", e);
+
+    alert("Erro ao enviar mensagem.");
+
+  }
+
 }
 
+/* ================= NUDGE ================= */
+
 async function sendNudge() {
-  playClick();
 
   if (!currentChat) return;
 
-  await addDoc(collection(db, "messages", currentChat, "chat"), {
-    type: "nudge",
-    sender: currentUser.uid,
-    timestamp: serverTimestamp()
-  });
-
   playNudge();
+
+  try {
+
+    await addDoc(
+      collection(db, "messages", currentChat, "chat"),
+      {
+
+        type: "nudge",
+        sender: currentUser.uid,
+        timestamp: serverTimestamp()
+
+      }
+    );
+
+  }
+
+  catch (e) {
+
+    console.error("Erro ao enviar nudge:", e);
+
+  }
+
 }
 
 /* ================= NUDGE FX ================= */
 
 function shakeWindow() {
-  const el = document.querySelector(".messenger-window");
-  if (!el) return;
 
-  let i = 0;
+  const windowEl =
+    document.querySelector(".messenger-window");
+
+  if (!windowEl) return;
+
+  let count = 0;
 
   const interval = setInterval(() => {
-    el.style.transform = `translate(${i % 2 ? 6 : -6}px,0)`;
-    i++;
 
-    if (i > 10) {
+    windowEl.style.transform =
+      `translate(${count % 2 ? 6 : -6}px,0)`;
+
+    count++;
+
+    if (count > 10) {
+
       clearInterval(interval);
-      el.style.transform = "translate(0,0)";
+
+      windowEl.style.transform = "";
+
     }
+
   }, 40);
+
 }
+
+/* ================= ENTER ================= */
+
+document.addEventListener("keydown", event => {
+
+  if (event.key !== "Enter") return;
+
+  const input = document.getElementById("messageInput");
+
+  if (!input) return;
+
+  if (document.activeElement === input) {
+
+    sendMessage();
+
+  }
+
+});

@@ -1,52 +1,110 @@
-const CACHE = "rpm-v1";
+const CACHE_NAME = "rpm-v2";
 
-const FILES = [
+const CACHE_FILES = [
+    "./",
+    "./index.html",
+    "./app.html",
+    "./sobre.html",
+    "./configuracoes.html",
+    "./termos.html",
+    "./offline.html",
 
-"./",
-"./index.html",
-"./app.html",
-"./sobre.html",
-"./configuracoes.html",
-"./termos.html",
+    "./style.css",
+    "./app.js",
+    "./firebase.js",
+    "./manifest.json",
 
-"./style.css",
-"./app.js",
-"./firebase.js",
+    "./assets/RPM_logo.png",
+    "./assets/icon-192.png",
+    "./assets/icon-512.png",
 
-"./assets/RPM_logo.png",
-"./assets/icon-192.png",
-"./assets/icon-512.png",
-"./assets/click.wav",
-"./assets/aeroclick.wav",
-"./assets/nudge.wav",
-
-"./offline.html"
-
+    "./assets/click.wav",
+    "./assets/aeroclick.wav",
+    "./assets/nudge.wav"
 ];
+
+/* ========================= */
+/* INSTALAÇÃO */
+/* ========================= */
 
 self.addEventListener("install", event => {
 
+    self.skipWaiting();
+
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(CACHE_FILES))
+    );
+
+});
+
+/* ========================= */
+/* ATIVAÇÃO */
+/* ========================= */
+
+self.addEventListener("activate", event => {
+
     event.waitUntil(
 
-        caches.open(CACHE).then(cache => cache.addAll(FILES))
+        caches.keys().then(keys => {
+
+            return Promise.all(
+
+                keys.map(key => {
+
+                    if (key !== CACHE_NAME) {
+                        return caches.delete(key);
+                    }
+
+                })
+
+            );
+
+        }).then(() => self.clients.claim())
 
     );
 
 });
 
+/* ========================= */
+/* FETCH */
+/* ========================= */
+
 self.addEventListener("fetch", event => {
+
+    if (event.request.method !== "GET") return;
 
     event.respondWith(
 
-        caches.match(event.request).then(response => {
+        fetch(event.request)
 
-            return response || fetch(event.request).catch(() => {
+            .then(response => {
 
-                return caches.match("./offline.html");
+                // Atualiza o cache automaticamente
+                const clone = response.clone();
 
-            });
+                caches.open(CACHE_NAME)
+                    .then(cache => cache.put(event.request, clone));
 
-        })
+                return response;
+
+            })
+
+            .catch(async () => {
+
+                const cached = await caches.match(event.request);
+
+                if (cached) return cached;
+
+                if (event.request.mode === "navigate") {
+                    return caches.match("./offline.html");
+                }
+
+                return new Response("", {
+                    status: 404
+                });
+
+            })
 
     );
 

@@ -6,12 +6,13 @@
   <title>Termos</title>
   <link rel="stylesheet" href="style.css">
 
-  <link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json">
 
 <meta name="theme-color" content="#4a90d9">
 
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 </head>
+
 <body class="rp-bg">
 
   <div class="rp-window">
@@ -31,6 +32,14 @@
 
     </div>
   </div>
+
+<script>
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js")
+        .then(() => console.log("✅ Service Worker registrado"))
+        .catch(err => console.error("❌ Erro:", err));
+}
+</script>
 
 </body>
 </html>

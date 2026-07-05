@@ -13,7 +13,7 @@ const FILES = [
 "/app.js",
 "/firebase.js",
 
-"/assets/avatar.png",
+"/assets/RPM_logo.png",
 "/assets/click.wav",
 "/assets/aeroclick.wav",
 "/assets/nudge.wav",

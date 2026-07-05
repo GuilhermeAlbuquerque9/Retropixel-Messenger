@@ -2,23 +2,25 @@ const CACHE = "rpm-v1";
 
 const FILES = [
 
-"/",
-"/index.html",
-"/app.html",
-"/sobre.html",
-"/configuracoes.html",
-"/termos.html",
+"./",
+"./index.html",
+"./app.html",
+"./sobre.html",
+"./configuracoes.html",
+"./termos.html",
 
-"/style.css",
-"/app.js",
-"/firebase.js",
+"./style.css",
+"./app.js",
+"./firebase.js",
 
-"/assets/RPM_logo.png",
-"/assets/click.wav",
-"/assets/aeroclick.wav",
-"/assets/nudge.wav",
+"./assets/RPM_logo.png",
+"./assets/icon-192.png",
+"./assets/icon-512.png",
+"./assets/click.wav",
+"./assets/aeroclick.wav",
+"./assets/nudge.wav",
 
-"/offline.html"
+"./offline.html"
 
 ];
 
@@ -40,7 +42,7 @@ self.addEventListener("fetch", event => {
 
             return response || fetch(event.request).catch(() => {
 
-                return caches.match("/offline.html");
+                return caches.match("./offline.html");
 
             });
 

@@ -318,6 +318,133 @@ async function logout() {
 
 }
 
+/* ================= CONTATOS ================= */
+
+async function loadContacts() {
+
+  const el = document.getElementById("contacts");
+
+  if (!el || !currentUser) return;
+
+  el.innerHTML = "Carregando...";
+
+  try {
+
+    const q = query(
+      collection(db, "contacts"),
+      where("owner", "==", currentUser.uid)
+    );
+
+    const contacts = await getDocs(q);
+    const users = await getDocs(collection(db, "users"));
+
+    el.innerHTML = "";
+
+    contacts.forEach(contactDoc => {
+
+      const contact = contactDoc.data();
+
+      users.forEach(userDoc => {
+
+        if (userDoc.id !== contact.contactId) return;
+
+        const user = userDoc.data();
+
+        const div = document.createElement("div");
+
+        div.className = "contact";
+
+        div.innerHTML = `
+          <span class="status ${user.status || "offline"}"></span>
+          <img src="assets/avatar.png" class="contact-avatar">
+          <span class="contact-name">${user.email}</span>
+        `;
+
+        div.onclick = () => {
+
+          playClick();
+
+          openChat(userDoc.id, user.email);
+
+        };
+
+        el.appendChild(div);
+
+      });
+
+    });
+
+  }
+
+  catch (e) {
+
+    console.error("Erro ao carregar contatos:", e);
+
+  }
+
+}
+
+/* ================= ADD CONTATO ================= */
+
+async function addContact() {
+
+  playClick();
+
+  const email = prompt("Email do contato:");
+
+  if (!email) return;
+
+  try {
+
+    const users = await getDocs(collection(db, "users"));
+
+    let found = null;
+
+    users.forEach(user => {
+
+      if (user.data().email.toLowerCase() === email.toLowerCase()) {
+
+        found = user.id;
+
+      }
+
+    });
+
+    if (!found) {
+
+      alert("Usuário não encontrado!");
+
+      return;
+
+    }
+
+    if (found === currentUser.uid) {
+
+      alert("Você não pode adicionar a si mesmo.");
+
+      return;
+
+    }
+
+    await addDoc(collection(db, "contacts"), {
+
+      owner: currentUser.uid,
+      contactId: found
+
+    });
+
+    loadContacts();
+
+  }
+
+  catch (e) {
+
+    console.error("Erro ao adicionar contato:", e);
+
+  }
+
+}
+
 /* ================= CHAT ================= */
 
 function getChatId(a, b) {
